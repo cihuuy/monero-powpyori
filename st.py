@@ -4,7 +4,6 @@ import socket
 import select
 import binascii
 import pycryptonight
-import pyrx
 import struct
 import json
 import sys
@@ -16,26 +15,26 @@ pool_port = 37811
 pool_pass = 'xpt'
 wallet_address = '86P42DaNTvmBmMLM4oL5kL6tVQVo9FfsnJDTqj6VU76whVzjMdMbMa7PV3SHAQuNySan44ToXVFn3gwFmqeDb58t1xqNVAB'
 nicehash = False
-num_workers = cpu_count()  # Default to number of CPU cores
+num_threads = cpu_count()  # Default to number of CPUs
 
-
+# Fungsi utama untuk koneksi dan login ke pool
 def main():
     pool_ip = socket.gethostbyname(pool_host)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((pool_ip, pool_port))
     
-    # Shared queue for jobs
+    # Shared queue untuk job mining
     job_queue = Queue()
 
-    # Start worker processes
+    # Mulai worker sesuai dengan jumlah thread yang ditentukan
     workers = [
         Process(target=worker, args=(job_queue, s))
-        for _ in range(num_workers)
+        for _ in range(num_threads)
     ]
     for w in workers:
         w.start()
 
-    # Prepare login request
+    # Persiapkan request login
     login = {
         'method': 'login',
         'params': {
@@ -158,7 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--nicehash', action='store_true', help='NiceHash mode')
     parser.add_argument('--host', action='store', help='Pool host')
     parser.add_argument('--port', action='store', help='Pool port')
-    parser.add_argument('--threads', type=int, default=cpu_count(), help='Number of threads (workers) to use')
+    parser.add_argument('--threads', action='store', type=int, default=cpu_count(), help='Number of threads to use')
     args = parser.parse_args()
     
     if args.nicehash:
@@ -168,6 +167,6 @@ if __name__ == '__main__':
     if args.port:
         pool_port = int(args.port)
     if args.threads:
-        num_workers = args.threads  # Set the number of workers based on user input
-
+        num_threads = args.threads
+    
     main()
